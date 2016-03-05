@@ -1,0 +1,61 @@
+[server]
+
+# Handlers for published metrics.
+handlers = {{ diamond_server_handlers | join(', ') }}
+
+user = {{ diamond_user }}
+group = {{ diamond_group }}
+pid_file = {{ diamond_pid_file }}
+
+collectors_path = {{ diamond_collectors_paths | join(', ') }}
+collectors_config_path = {{ diamond_collectors_config_path }}
+
+handlers_path = {{ diamond_handlers_paths | join(', ') }}
+handlers_config_path = {{ diamond_handlers_config_path }}
+
+metric_queue_size = {{ diamond_metric_queue_size }}
+
+[handlers]
+
+keys = syslog
+
+{% for key, value in diamond_handlers_config.iteritems() %}
+[[{{ key }}]]
+{% for k, v in value.iteritems() %}
+{{ k }} = {{ v }}
+{% endfor %}
+
+{% endfor %}
+
+[collectors]
+{% for key, value in diamond_collectors_config.iteritems() %}
+[[{{ key }}]]
+{% for k, v in value.iteritems() %}
+{{ k }} = {{ v }}
+{% endfor %}
+
+{% endfor %}
+
+[loggers]
+keys = root
+
+[formatters]
+keys = {{ diamond_log_formatters.keys() | join(', ') }}
+
+[logger_root]
+level = {{ diamond_log_level }}
+handlers = {{ diamond_log_handlers.keys() | join(',') }}
+
+{% for key, value in diamond_log_handlers.iteritems() %}
+[handler_{{ key }}]
+{% for k, v in value.iteritems() %}
+{{ k }} = {{ v }}
+{% endfor %}
+{% endfor %}
+
+{% for key, value in diamond_log_formatters.iteritems() %}
+[formatter_{{ key }}]
+{% for k, v in value.iteritems() %}
+{{ k }} = {{ v }}
+{% endfor %}
+{% endfor %}

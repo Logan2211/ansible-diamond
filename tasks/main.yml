@@ -1,0 +1,76 @@
+---
+
+- name: Install diamond
+  pip:
+    name: "{{ item }}"
+    state: present
+    extra_args: "{{ pip_install_options|default('') }}"
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items: diamond_pip_packages
+  tags:
+    - diamond-install
+    - diamond-pip-packages
+
+- name: Create diamond group
+  group:
+    name: diamond
+    system: yes
+  when: diamond_create_user | bool
+  tags:
+    - diamond-user
+    - diamond-upstart-config
+
+- name: Create diamond user
+  user:
+    name: diamond
+    group: diamond
+    shell: /bin/false
+    system: yes
+  when: diamond_create_user | bool
+  tags:
+    - diamond-user
+    - diamond-upstart-config
+
+- name: Drop diamond upstart configurations
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - { src: diamond-upstart.conf, dest: /etc/init/diamond.conf }
+    - { src: diamond-default.conf, dest: /etc/default/diamond }
+  notify:
+    - Reload init scripts
+    - Restart diamond
+  tags:
+    - diamond-config
+    - diamond-upstart-config
+
+- name: Create diamond config directory
+  file:
+    path: /etc/diamond
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - diamond-config
+
+- name: Drop Diamond configuration
+  config_template:
+    src: diamond.conf.j2
+    dest: /etc/diamond/diamond.conf
+    owner: root
+    group: root
+    mode: '0644'
+    config_overrides: "{{ diamond_config_overrides }}"
+    config_type: 'ini'
+  notify:
+    - Restart diamond
+  tags:
+    - diamond-config

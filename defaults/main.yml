@@ -1,0 +1,49 @@
+---
+
+diamond_server_handlers:
+  - diamond.handler.graphite.GraphiteHandler
+diamond_create_user: yes
+diamond_user: ''
+diamond_group: ''
+diamond_pid_file: '/var/run/diamond.pid'
+diamond_collectors_paths:
+  - /usr/local/share/diamond/collectors/
+diamond_collectors_config_path: /etc/diamond/collectors
+diamond_handlers_paths:
+  - /usr/local/share/diamond/handlers
+diamond_handlers_config_path: /etc/diamond/handlers
+diamond_metric_queue_size: 16384
+diamond_handlers_config:
+  default: {}
+  GraphiteHandler:
+    host: 10.0.0.1
+    port: 2003
+    timeout: 15
+    batch: 1
+diamond_default_interval: 60
+diamond_collectors_config:
+  default:
+    interval: "{{ diamond_default_interval }}"
+  CPUCollector:
+    enabled: true
+  DiskSpaceCollector:
+    enabled: true
+
+diamond_log_level: INFO
+diamond_log_handlers:
+  syslog:
+    class: handlers.SysLogHandler
+    formatter: syslog
+    args: "('/dev/log',)"
+diamond_log_formatters:
+  default:
+    format: '[%(asctime)s] [%(threadName)s] %(message)s'
+    datefmt: ''
+  syslog:
+    format: '%(asctime)-15s diamond[%(process)d] %(message)s'
+    datefmt: '%b %d %H:%M:%S'
+
+diamond_config_overrides: {}
+
+diamond_pip_packages:
+  - diamond

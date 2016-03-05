@@ -1,0 +1,7 @@
+This is a role to deploy Diamond to Ubuntu systems
+https://github.com/python-diamond/Diamond
+
+See defaults for configurable values.
+
+You will need the config_template.py action plugin present in your Ansible plugins path
+https://github.com/openstack/openstack-ansible-plugins/blob/master/action/config_template.py
