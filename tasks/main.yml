@@ -1,4 +1,30 @@
 ---
+# Copyright 2016, Logan Vig <logan2211@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Check init system
+  command: cat /proc/1/comm
+  changed_when: false
+  register: _pid1_name
+  tags:
+    - always
+
+- name: Set the name of pid1
+  set_fact:
+    pid1_name: "{{ _pid1_name.stdout }}"
+  tags:
+    - always
 
 - name: Install diamond
   pip:
@@ -9,7 +35,7 @@
   until: install_packages|success
   retries: 5
   delay: 2
-  with_items: diamond_pip_packages
+  with_items: "{{ diamond_pip_packages }}"
   tags:
     - diamond-install
     - diamond-pip-packages
@@ -44,8 +70,27 @@
   with_items:
     - { src: diamond-upstart.conf, dest: /etc/init/diamond.conf }
     - { src: diamond-default.conf, dest: /etc/default/diamond }
+  when: "{{ pid1_name == 'init' }}"
   notify:
     - Reload init scripts
+    - Restart diamond
+  tags:
+    - diamond-config
+    - diamond-upstart-config
+
+- name: Drop diamond systemd configurations
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - { src: diamond-systemd.conf, dest: /etc/systemd/system/diamond.service }
+    - { src: diamond-default.conf, dest: /etc/default/diamond }
+  when: "{{ pid1_name == 'systemd' }}"
+  notify:
+    - Reload systemd daemon
     - Restart diamond
   tags:
     - diamond-config
